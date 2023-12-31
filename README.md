@@ -12,6 +12,15 @@
 # Project Shkedia/Months worker
 # Overview
 An insight engine that creates collection regarding the month of the media.
+The worker has 2 flows:
+1. Batch Flow
+    1. Get 1000 media that were not handled already
+    2. Extract the media month insight
+    3. Send the insight to the db
+2. Message-Broker flow:
+    1. Get message about new media
+    2. Extract the media month insight
+    3. Send the insight to the db
 
 # Deploy
 ## Local Deployment
