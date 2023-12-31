@@ -3,6 +3,6 @@
         "dockerfile": "Dockerfile",
         "context": "../"
     },
-    // "runArgs": [ "-v", "${localEnv:POSTGRES_CRED_LOCATION}/:/temp/", "-p","24500:5000"],
+    "runArgs": [ "-v", "${localEnv:POSTGRES_CRED_LOCATION}/:/temp/"],
     "shutdownAction": "stopContainer"
 }
