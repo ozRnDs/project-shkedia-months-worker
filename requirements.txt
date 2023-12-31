@@ -1,2 +1,2 @@
-project-shkedia-models==0.1.0
+project-shkedia-models==0.3.0
 requests
