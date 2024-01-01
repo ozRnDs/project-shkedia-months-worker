@@ -30,7 +30,9 @@
                 "MEDIA_REPO_PORT": "4432",
                 "USER_DB_HOST": "10.0.0.5",
                 "USER_DB_PORT": "4430",
-                "DEBUG": "1"
+                "DEBUG": "1",
+                "BATCH_SIZE": "100",
+                "BATCH_PROCESS_PERIOD_MIN": "0.1"
             }
         }
     ]
