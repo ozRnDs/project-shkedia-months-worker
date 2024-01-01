@@ -35,7 +35,7 @@ class ApplicationConfiguration:
     OUTPUT_EXCHANGE_NAME: str = "output.month.engine"
     
     BATCH_SIZE: int = 100
-    BATCH_PROCESS_PERIOD_MIN: int = 30
+    BATCH_PROCESS_PERIOD_MIN: float = 30
 
     def __init__(self) -> None:
         self.logger = logging.getLogger()
@@ -49,7 +49,10 @@ class ApplicationConfiguration:
         for attr, attr_type in self.__annotations__.items():
             try:
                 self.__setattr__(attr, (attr_type)(os.environ[attr]))
+            except KeyError:
+                self.logger.warning(f"Could not find {attr} in environment. Run with default value")
             except Exception as err:
-                self.logger.warning(f"Couldn't find {attr} in environment. Run with default value")
+                self.logger.error(f"Could not load {attr} from environment: {str(err)}")
+
         
 app_config = ApplicationConfiguration()
