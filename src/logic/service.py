@@ -15,17 +15,18 @@ class MonthsEngineLogics:
                  engine_details: insights.InsightEngine,
                  batch_process_size: int = 200,
                  batch_processing_period_minutes: float = 120,) -> None:
-        self.engine = engine_details
         self.media_db_service = media_db_service
         self.batch_process_size = batch_process_size
         self.batch_processing_period_minutes = batch_processing_period_minutes
-    
+        self.engine = self.__init_engine__()
+
 
     def __init_engine__(self):
-        #TODO: Get the engine's details if the exists in the db
-        #TODO: Create the engine in the db if not exists
+        search_results = self.media_db_service.search_engine(engine_name="months")
+        if search_results.total_results_number > 0:
+            return insights.InsightEngine(**search_results.results[0])
+        #TODO: Create the engine in the db if not exists           
         #TODO: Updates the engine details if needed
-        pass
 
 
     def create_jobs(self):
@@ -61,7 +62,7 @@ class MonthsEngineLogics:
                 temp_job,media_item = value
                 temp_image_insight = insights.Insight(insight_engine_id=self.engine.id,
                                                       media_id=media_item.media_id,
-                                                      name=media_item.created_on.strftime("%m-%Y"),
+                                                      name=media_item.created_on.strftime("%Y-%m"),
                                                       job_id=temp_job.id,
                                                       status=insights.InsightStatusEnum.APPROVED)
                 logger.info(f"Process job ({job_id}). Added insight calculated: {temp_image_insight.name}")
@@ -74,6 +75,7 @@ class MonthsEngineLogics:
                     job.end_time = datetime.now()
                 if not self.media_db_service.update_jobs(jobs_to_process)>0:
                     logger.error(f"Could not update job {jobs_to_process}")
-            time.sleep(self.batch_processing_period_minutes*60)
+            if len(jobs_to_process)==0:
+                time.sleep(self.batch_processing_period_minutes*60)
 
 
