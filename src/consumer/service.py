@@ -17,11 +17,14 @@ from publisher.sns_wrapper import SnsWrapper
 class SqsMessageBody(BaseModel):
     Type: str
     MessageId: str
-    SequenceNumber: int
     TopicArn: str
     Message: str
     Timestamp: datetime
     UnsubscribeURL: str
+    SequenceNumber: int | None = None
+    SignatureVersion: str | None = None
+    Signature: str | None = None
+    SigningCertURL: str | None = None
 
     @property
     def topic_name(self):
@@ -41,6 +44,7 @@ class ConsumerService:
                  message_ownership_time_seconds: int=600,
                  batch_size: int = 10,
                  sns_wrapper: SnsWrapper | None = None,
+                 environment: str = "test"
                  ) -> None:
         
         self.sqs = boto3.resource("sqs")
@@ -48,7 +52,8 @@ class ConsumerService:
         self.message_ownership_time_seconds = message_ownership_time_seconds
         self.batch_size = batch_size
         self.callbacks = []
-        self.queue = self.__init_queue__(queue_name)
+        self.environment = environment
+        self.queue = self.__init_queue__(queue_name+"_"+self.environment)
         self.sns_wrapper = sns_wrapper
         
 
@@ -60,7 +65,7 @@ class ConsumerService:
             raise ValueError("SNS Wrapper was not supplied. Can't bind topic without it")
 
         for topic in topics_to_bind:
-            topic_object = self.sns_wrapper.create_topic(topic)
+            topic_object = self.sns_wrapper.create_topic(topic+"_"+self.environment)
             self.sns_wrapper.subscribe(topic_object,"sqs",self.queue.attributes["QueueArn"])
             self.__add_access_policy__(self.queue,topic_object.attributes["TopicArn"])
         
@@ -69,7 +74,7 @@ class ConsumerService:
             raise ValueError("SNS Wrapper was not supplied. Can't unbind topics without it")
         for topic in self.sns_wrapper.list_topics():
             parsed_arn = ArnParser().parse_arn(topic.arn)
-            if parsed_arn["resource"] in topics_to_unbind:
+            if parsed_arn["resource"]+"_"+self.environment in topics_to_unbind:
                 self.__delete_access_policy__(self.queue, topic.arn)
                 
                 logger.info(f"Unbinded topic {parsed_arn['resource']}")
@@ -180,7 +185,6 @@ class ConsumerService:
                 to perform queue operations like sending and receiving messages.
         """
         deduplicate = fifo if not fifo else deduplicate
-
         if not attributes:
             attributes ={
             "MaximumMessageSize": str(65536),
@@ -196,19 +200,24 @@ class ConsumerService:
         logger.info("Created queue '%s' with URL=%s", queue_name, queue.url)
         return queue
     
-    def listen(self):
+    def listen(self, sleep_time: int):
         logger.info("Start Listening")
         while True:
+            messages = None
             try:
                 messages = self.__receive_messages__()
+                if len(messages)==0:
+                    time.sleep(sleep_time)
+                    logger.info("Waiting for messages")
+                    continue
                 messages_bodies = [SqsMessageBody(**json.loads(message.body)) for message in messages]
                 for callback in self.callbacks:
                     callback(messages_bodies)
                 self.__ack_messages__(messages)
                 if len(messages)<self.batch_size:
-                    time.sleep(5)
+                    time.sleep(sleep_time)
             except Exception as err:
-                if messages:
+                if messages is list and len(messages)>0:
                     self.__nack_messages__(messages)
                 traceback.print_exc()
                 logger.error(err)
