@@ -31,15 +31,16 @@
                 "USER_DB_HOST": "10.0.0.5",
                 "USER_DB_PORT": "4430",
                 "DEBUG": "1",
-                "BATCH_SIZE": "100",
+                "BATCH_SIZE": "10",
                 "BATCH_PROCESS_PERIOD_MIN": "0.1",
                 "LOG_LEVEL": "20",
                 "ENGINE_DETAILS__NAME": "months",
                 "ENGINE_DETAILS__DESCRIPTION": "Extract the month and year the media was created in the format: YYYY-MM",
-                "ENGINE_DETAILS__INPUT_SOURCE": "raw.images",
+                "ENGINE_DETAILS__INPUT_SOURCE": "images_metadata",
                 "ENGINE_DETAILS__INPUT_QUEUE_NAME": "InputMonthEngine",
-                "ENGINE_DETAILS__OUTPUT_EXCHANGE_NAME": "output.month.engine",
-                "AUTH_DB_CREDENTIALS_LOCATION": "${workspaceFolder}/.local/credentials"
+                "ENGINE_DETAILS__OUTPUT_EXCHANGE_NAME": "insights_months",
+                "AUTH_DB_CREDENTIALS_LOCATION": "${workspaceFolder}/.local/credentials",
+                "ENVIRONMENT": "dev0"
             }
         }
     ]

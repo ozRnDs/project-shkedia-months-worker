@@ -41,8 +41,12 @@ class ApplicationConfiguration(BaseSettings):
     # Worker Configuration Values
     ENGINE_DETAILS: InsightEngine
     
-    BATCH_SIZE: int = 100
+    BATCH_SIZE: int = 10 # Can be up to 10
     BATCH_PROCESS_PERIOD_MIN: float = 30
+
+    # Consumer Configuration Values
+    LISTENING_TIME_SECONDS: int = 20 # Can be between 0-20
+    MESSAGE_OWNERSHIP_TIME_SECONDS: int = 10
 
     logger: ClassVar[logging.Logger]= logging.getLogger()
 
