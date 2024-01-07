@@ -3,6 +3,6 @@
         "dockerfile": "Dockerfile",
         "context": "../"
     },
-    "runArgs": [ "-v", "${localEnv:POSTGRES_CRED_LOCATION}/:/temp/"],
+    "runArgs": [ "-v", "${localEnv:POSTGRES_CRED_LOCATION}/:/temp/","-v","${localEnv:AWS_CRED_LOCATION}/:/root/.aws"],
     "shutdownAction": "stopContainer"
 }
