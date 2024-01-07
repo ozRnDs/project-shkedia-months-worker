@@ -2,6 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 from typing import List
 
+from db.models import Token
 from project_shkedia_models import media, search, insights,jobs
 
 class MediaDBService:
@@ -42,6 +43,27 @@ class MediaDBService:
             return search.SearchResult(**results.json())
         raise Exception(f"{results.json().detail}")        
 
+    def create_engine(self, engine: insights.InsightEngine):
+        json = [engine.model_dump()]
+
+        put_engine_api_url = self.db_service_url + f"/v3/insights-engines"
+
+        s = requests.Session()
+
+        retries = Retry(total=5,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504])
+
+        s.mount('http://', HTTPAdapter(max_retries=retries))
+
+        results = s.put(put_engine_api_url, json=json)
+
+        s.close()
+
+        if results.status_code==200:
+            return [insights.InsightEngineBasic(**result_item) for result_item in results.json()][0]
+        raise Exception(f"{results.status_code}: {results.detail}")
+
     def get_media_to_analyze(self, engine_name: str, batch_size: int | None = None) -> search.SearchResult:
         batch_size = batch_size if batch_size else self.default_batch_size
         
@@ -68,12 +90,13 @@ class MediaDBService:
             return search.SearchResult(**results.json())
         raise Exception(f"{results.json().detail}")
 
-    def get_media_by_ids(self, media_ids_list: str) -> search.SearchResult:
+    def get_media_by_ids(self, token: Token, media_ids_list: str,  page_size: int | None = None) -> search.SearchResult:
         
         get_images_api_url = self.db_service_url + f"/v1/media/search"
 
         query_params = {
-            "media_id": [media_ids_list]
+            "media_id": [media_ids_list],
+            "page_size": page_size
         }
 
         s = requests.Session()
@@ -84,7 +107,7 @@ class MediaDBService:
 
         s.mount('http://', HTTPAdapter(max_retries=retries))
 
-        results = s.get(get_images_api_url, params=query_params)
+        results = s.get(get_images_api_url, params=query_params, headers=token.get_token_as_header())
 
         s.close()
 

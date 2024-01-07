@@ -1,13 +1,24 @@
+from typing import ClassVar
 import os
 import logging
 logging.basicConfig(format='%(asctime)s.%(msecs)05d | %(levelname)s | %(filename)s:%(lineno)d | %(message)s' , datefmt='%FY%T')
 
-class ApplicationConfiguration:
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from project_shkedia_models.insights import InsightEngine
+
+class SecretsConfiguration(BaseSettings):
+    password: str
+    user_name: str
+
+class ApplicationConfiguration(BaseSettings):
+    model_config = SettingsConfigDict(env_nested_delimiter='__')
 
     RECONNECT_WAIT_TIME: int = 1
     RETRY_NUMBER: int = 10
-    ENVIRONMENT: str = "DEV"
+    ENVIRONMENT: str = "dev0"
     DEBUG: bool = False
+    LOG_LEVEL: int = 30
 
     # Authentication Configuration values
     AUTH_SERVICE_URL: str = "CHANGE ME"
@@ -28,31 +39,15 @@ class ApplicationConfiguration:
     PRIVATE_KEY_LOCATION: str = ".local/data"
 
     # Worker Configuration Values
-    ENGINE_NAME: str = "months"
-    DESCRIPTION: str = "Extract the month and year the media was created in the format: MM-YYYY"
-    INPUT_SOURCE: str = "raw.image"
-    INPUT_QUEUE_NAME: str = "InputMonthEngine"
-    OUTPUT_EXCHANGE_NAME: str = "output.month.engine"
+    ENGINE_DETAILS: InsightEngine
     
     BATCH_SIZE: int = 100
     BATCH_PROCESS_PERIOD_MIN: float = 30
 
-    def __init__(self) -> None:
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
-        self.logger.info("Start App")
+    logger: ClassVar[logging.Logger]= logging.getLogger()
 
-        self.extract_env_variables()
-        
 
-    def extract_env_variables(self):
-        for attr, attr_type in self.__annotations__.items():
-            try:
-                self.__setattr__(attr, (attr_type)(os.environ[attr]))
-            except KeyError:
-                self.logger.warning(f"Could not find {attr} in environment. Run with default value")
-            except Exception as err:
-                self.logger.error(f"Could not load {attr} from environment: {str(err)}")
-
-        
 app_config = ApplicationConfiguration()
+secret_config = SecretsConfiguration(_secrets_dir=app_config.AUTH_DB_CREDENTIALS_LOCATION)
+app_config.logger.setLevel(app_config.LOG_LEVEL)
+app_config.logger.info("Loaded Application Configuration")
