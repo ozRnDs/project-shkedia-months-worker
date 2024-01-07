@@ -159,7 +159,7 @@ class MediaDBService:
         s.close()
 
         if results.status_code==200:
-            return len(results.json())
+            return [jobs.InsightJob(**job_item) for job_item in results.json()]
         raise Exception(f"{results.status_code}: {results.detail}")
         
     def update_jobs(self, job_list: List[jobs.InsightJob]):
